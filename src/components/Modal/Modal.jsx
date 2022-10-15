@@ -18,7 +18,6 @@ export class Modal extends Component {
   }
 
   onEscapeClick = evt => {
-    console.log(evt.key);
     if (evt.key === 'Escape') {
       this.props.closeModal();
     } else return;
