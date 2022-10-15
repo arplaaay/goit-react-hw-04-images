@@ -7,6 +7,7 @@ export default function Modal({ closeModal, largeImage, alt }) {
     document.addEventListener('keydown', onEscapeClick);
 
     return () => document.removeEventListener('keydown', onEscapeClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onEscapeClick = evt => {
