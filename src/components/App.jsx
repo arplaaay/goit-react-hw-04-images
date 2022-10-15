@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import './App.css';
+import apiImages from '../services/api';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-
-import apiImages from '../services/api';
+import { Button } from './Button/Button';
+import { Loader } from './Loader/Loader';
+import { Modal } from './Modal/Modal';
 
 export class App extends Component {
   state = {
@@ -20,10 +22,6 @@ export class App extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { searchName, page } = this.state;
-
-    // console.log('prevState.searchName:', prevState.searchName);
-    // console.log('this.state.searchName:', this.state.searchName);
-    // console.log('Изменился запрос');
 
     if (
       prevState.searchName !== this.state.searchName ||
@@ -53,13 +51,45 @@ export class App extends Component {
     }
   };
 
+  handleButtonLoad = () => {
+    this.setState(prevState => {
+      return { page: prevState.page + 1 };
+    });
+  };
+
+  handleOpenModal = currentImageId => {
+    this.setState(prevState => {
+      return {
+        isModalOpen: true,
+        largeImage: prevState.images.find(
+          imageId => imageId.id === currentImageId
+        ).largeImageURL,
+        tag: prevState.images.find(imageId => imageId.id === currentImageId)
+          .tags,
+      };
+    });
+  };
+
+  handleCloseModal = () => {
+    this.setState({ isModalOpen: false });
+  };
+
   render() {
-    const { images } = this.state;
+    const { images, isLoading, isModalOpen, largeImage, tag } = this.state;
 
     return (
       <div className="App">
         <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery images={images} />
+        <ImageGallery images={images} openModal={this.handleOpenModal} />
+        {isLoading && <Loader />}
+        {images.length > 0 && <Button onClick={this.handleButtonLoad} />}
+        {isModalOpen && (
+          <Modal
+            closeModal={this.handleCloseModal}
+            largeImage={largeImage}
+            alt={tag}
+          />
+        )}
         <ToastContainer />
       </div>
     );

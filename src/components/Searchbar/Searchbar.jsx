@@ -2,8 +2,13 @@ import React, { Component } from 'react';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { toast } from 'react-toastify';
 import styles from './Searchbar.module.css';
+import { PropTypes } from 'prop-types';
 
 export class Searchbar extends Component {
+  static propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };
+
   state = {
     searchName: '',
   };
