@@ -23,6 +23,8 @@ export class App extends Component {
   componentDidUpdate(prevProps, prevState) {
     const { searchName, page } = this.state;
 
+    const isNewSearchName = prevState.searchName !== this.state.searchName;
+
     if (
       prevState.searchName !== this.state.searchName ||
       prevState.page !== this.state.page
@@ -30,7 +32,11 @@ export class App extends Component {
       apiImages
         .getImages(searchName, page)
         .then(dataImages =>
-          this.setState({ images: [...prevState.images, ...dataImages] })
+          this.setState({
+            images: isNewSearchName
+              ? dataImages
+              : [...prevState.images, ...dataImages],
+          })
         )
         .catch(console.log())
         .finally(() => this.setState({ isLoading: false }));
@@ -53,7 +59,7 @@ export class App extends Component {
 
   handleButtonLoad = () => {
     this.setState(prevState => {
-      return { page: prevState.page + 1 };
+      return { page: prevState.page + 1, isLoading: true };
     });
   };
 
@@ -82,7 +88,9 @@ export class App extends Component {
         <Searchbar onSubmit={this.handleFormSubmit} />
         <ImageGallery images={images} openModal={this.handleOpenModal} />
         {isLoading && <Loader />}
-        {images.length > 0 && <Button onClick={this.handleButtonLoad} />}
+        {images.length > 0 && !isLoading && (
+          <Button onClick={this.handleButtonLoad} />
+        )}
         {isModalOpen && (
           <Modal
             closeModal={this.handleCloseModal}

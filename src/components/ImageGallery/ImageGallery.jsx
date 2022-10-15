@@ -3,7 +3,7 @@ import styles from './ImageGallery.module.css';
 import PropTypes from 'prop-types';
 
 export const ImageGallery = ({ images, openModal }) => {
-  return (
+  return images.length ? (
     <ul className={styles.ImageGallery}>
       {images.map(image => {
         const { id, webformatURL, tags } = image;
@@ -18,7 +18,7 @@ export const ImageGallery = ({ images, openModal }) => {
         );
       })}
     </ul>
-  );
+  ) : null;
 };
 
 ImageGallery.propTypes = {
