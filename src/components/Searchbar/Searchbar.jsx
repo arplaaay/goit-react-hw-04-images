@@ -10,7 +10,7 @@ export default function Searchbar({ onSubmit }) {
   const handleNameChange = evt => {
     const { value } = evt.currentTarget;
 
-    setsearchName(value);
+    setsearchName(value.toLowerCase());
   };
 
   const handleSubmit = evt => {
@@ -30,6 +30,7 @@ export default function Searchbar({ onSubmit }) {
     }
 
     onSubmit(searchName);
+    setsearchName('');
   };
 
   return (

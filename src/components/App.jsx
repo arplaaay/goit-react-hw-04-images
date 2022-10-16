@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import apiImages from '../services/api';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Searchbar from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
@@ -10,71 +10,88 @@ import { Loader } from './Loader/Loader';
 import Modal from './Modal/Modal';
 
 export default function App() {
-  const [state, setState] = useState({
-    images: [],
-    largeImage: '',
-    tag: '',
-    searchName: '',
-    page: 0,
-    isLoading: false,
-    isModalOpen: false,
-    isNewSearchInput: true,
-  });
+  // const [state, setState] = useState({
+  //   images: [],
+  //   largeImage: '',
+  //   tag: '',
+  //   searchName: '',
+  //   page: 0,
+  //   isLoading: false,
+  //   isModalOpen: false,
+  //   isNewSearchInput: true,
+  // });
+
+  const [images, setImages] = useState([]);
+  const [largeImage, setLargeImage] = useState('');
+  const [tag, setTag] = useState('');
+  const [searchName, setSearchName] = useState('');
+  const [page, setPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const isLastPage = useRef(true);
+  // console.log(isLastPage.current);
 
   useEffect(() => {
-    if (state.searchName) {
-      apiImages
-        .getImages(state.searchName, state.page)
-        .then(dataImages =>
-          setState(prev => ({
-            ...prev,
-            images: prev.isNewSearchInput
-              ? dataImages
-              : [...prev.images, ...dataImages],
-          }))
-        )
-        .catch(console.log)
-        .finally(() => setState(prev => ({ ...prev, isLoading: false })));
-    }
-  }, [state.page, state.searchName]);
-
-  const handleFormSubmit = input => {
-    if (input === state.searchName) {
+    if (!searchName || !page) {
       return;
     } else {
-      setState(prev => ({
-        ...prev,
-        searchName: input,
-        page: 1,
-        images: [],
-        isModalOpen: false,
-        isLoading: true,
-        isNewSearchInput: true,
-      }));
+      async function getImages() {
+        setIsLoading(true);
+
+        try {
+          const dataImages = await apiImages.getImages(searchName, page);
+          const { length } = dataImages.hits;
+
+          if (!length) {
+            toast.error('There are no images matching your search!');
+            isLastPage.current = true;
+            setIsLoading(false);
+            return;
+          }
+
+          const countTotalResults = page * 12;
+          isLastPage.current = countTotalResults >= dataImages.totalHits;
+
+          setImages(prevState => [...prevState, ...dataImages.hits]);
+          setIsLoading(false);
+        } catch (error) {
+          console.log(error);
+          toast.error('There are no images matching your search!');
+        }
+      }
+
+      getImages();
+    }
+  }, [searchName, page]);
+
+  const handleFormSubmit = input => {
+    if (input === searchName) {
+      return;
+    } else {
+      setSearchName(input);
+      setPage(1);
+      setImages([]);
+      setIsModalOpen(false);
+      setIsLoading(true);
     }
   };
 
   const handleButtonLoad = () => {
-    setState(prev => ({
-      ...prev,
-      page: prev.page + 1,
-      isLoading: true,
-      isNewSearchInput: false,
-    }));
+    setPage(prevState => prevState + 1);
+    setIsLoading(true);
   };
 
   const handleOpenModal = currentImageId => {
-    setState(prev => ({
-      ...prev,
-      isModalOpen: true,
-      largeImage: prev.images.find(imageId => imageId.id === currentImageId)
-        .largeImageURL,
-      tag: prev.images.find(imageId => imageId.id === currentImageId).tags,
-    }));
+    setIsModalOpen(true);
+
+    setLargeImage(
+      images.find(image => image.id === currentImageId).largeImageURL
+    );
+    setTag(images.find(image => image.id === currentImageId).tags);
   };
 
   const handleCloseModal = () => {
-    setState(prev => ({ ...prev, isModalOpen: false }));
+    setIsModalOpen(false);
   };
 
   // const { images, isLoading, isModalOpen, largeImage, tag } = this.state;
@@ -82,16 +99,14 @@ export default function App() {
   return (
     <div className="App">
       <Searchbar onSubmit={handleFormSubmit} />
-      <ImageGallery images={state.images} openModal={handleOpenModal} />
-      {state.isLoading && <Loader />}
-      {state.images.length > 0 && !state.isLoading && (
-        <Button onClick={handleButtonLoad} />
-      )}
-      {state.isModalOpen && (
+      <ImageGallery images={images} openModal={handleOpenModal} />
+      {isLoading && <Loader />}
+      {images.length > 0 && !isLoading && <Button onClick={handleButtonLoad} />}
+      {isModalOpen && (
         <Modal
           closeModal={handleCloseModal}
-          largeImage={state.largeImage}
-          alt={state.tag}
+          largeImage={largeImage}
+          alt={tag}
         />
       )}
       <ToastContainer />
